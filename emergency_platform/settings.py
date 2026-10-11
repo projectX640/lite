@@ -80,7 +80,18 @@ TEMPLATES = [
 WSGI_APPLICATION = "emergency_platform.wsgi.application"
 ASGI_APPLICATION = "emergency_platform.asgi.application"
 DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL:
+USE_SQLITE = os.getenv("DJANGO_USE_SQLITE", "0") == "1"
+SQLITE_DATABASE_PATH = os.getenv("DJANGO_SQLITE_PATH", str(BASE_DIR / "db.sqlite3"))
+if USE_SQLITE:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": SQLITE_DATABASE_PATH,
+            "OPTIONS": {"timeout": 20},
+            "CONN_MAX_AGE": 0,
+        },
+    }
+elif DATABASE_URL:
     database_url = urlparse(DATABASE_URL)
     if database_url.scheme not in {"postgres", "postgresql"}:
         raise ImproperlyConfigured("DATABASE_URL must use the postgres:// or postgresql:// scheme.")
@@ -106,7 +117,7 @@ elif DEBUG:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": SQLITE_DATABASE_PATH,
             "OPTIONS": {"timeout": 20},
             "CONN_MAX_AGE": 0,
         },
@@ -157,6 +168,7 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
