@@ -17,7 +17,7 @@ This is the first Django MVP for a location-aware emergency request platform.
 - Protected recording and audio endpoints so emergency media is not exposed through direct public file URLs.
 - Application-level encryption for incident contacts, coordinates, descriptions, messages, referral details, and MFA secrets.
 - TOTP multi-factor authentication for responder, institution, and production Django admin access, with replay protection.
-- PostgreSQL configuration through `DATABASE_URL`, with SQLite retained only for local development and tests.
+- PostgreSQL configuration through `DATABASE_URL`, with an explicit `DJANGO_USE_SQLITE=1` option for SQLite deployments.
 - A separate parent-administrator password gate protects the Django admin section from the responder dashboard.
 
 ## Run locally
@@ -33,6 +33,8 @@ Open `http://127.0.0.1:8000/` for the public form and `/admin/` for operations.
 Create `LocationArea` records in the admin before directing users to the form. Create response profiles and assign them to areas to define the operational ownership.
 
 Local development can use SQLite with WAL mode, foreign-key enforcement, and a busy timeout. Production uses PostgreSQL through `DATABASE_URL`; do not run production responders against a shared SQLite file.
+
+To explicitly use SQLite, set `DJANGO_USE_SQLITE=1`. On Render, SQLite data is stored on the service filesystem and can be lost when the service is redeployed or restarted unless a persistent disk is attached. PostgreSQL is recommended for production responders.
 
 To use PostgreSQL locally, export a connection string before running Django:
 
@@ -63,10 +65,11 @@ Mini-admins sign in at `http://127.0.0.1:8000/dashboard/login/`. A main administ
 
 ## Next integrations
 
-Before deployment, set `DATABASE_URL=postgresql://user:password@host:5432/database?sslmode=require`, a strong `DJANGO_SECRET_KEY`, a separately stored Fernet `DJANGO_FIELD_ENCRYPTION_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, and `DJANGO_SECURE_COOKIES=1` over HTTPS. MFA is required automatically when debug mode is disabled; `DJANGO_MFA_REQUIRED=1` can enforce it explicitly. Override the development admin-gate password with `DJANGO_ADMIN_SECTION_PASSWORD` or provide a precomputed `DJANGO_ADMIN_SECTION_PASSWORD_HASH`. Set `DJANGO_TRUST_PROXY_HEADERS=1` only when a trusted HTTPS reverse proxy overwrites forwarding headers. The production cookie, HSTS, content-type, referrer, and SSL settings are enabled when debug mode is disabled. Use `REDIS_URL` for Channels if more than one worker is used. Back up the encryption key separately from PostgreSQL, and test key-and-database restoration together. Do not treat IP/VPN detection as proof of a user's location; device GPS or user-confirmed location is preferred.
+Before deployment, set either `DATABASE_URL=postgresql://user:password@host:5432/database?sslmode=require` or `DJANGO_USE_SQLITE=1`, along with a strong `DJANGO_SECRET_KEY`, a separately stored Fernet `DJANGO_FIELD_ENCRYPTION_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, and `DJANGO_SECURE_COOKIES=1` over HTTPS. MFA is required automatically when debug mode is disabled; `DJANGO_MFA_REQUIRED=1` can enforce it explicitly. Override the development admin-gate password with `DJANGO_ADMIN_SECTION_PASSWORD` or provide a precomputed `DJANGO_ADMIN_SECTION_PASSWORD_HASH`. Set `DJANGO_TRUST_PROXY_HEADERS=1` only when a trusted HTTPS reverse proxy overwrites forwarding headers. The production cookie, HSTS, content-type, referrer, and SSL settings are enabled when debug mode is disabled. Use `REDIS_URL` for Channels if more than one worker is used. Back up the encryption key separately from PostgreSQL, and test key-and-database restoration together. Do not treat IP/VPN detection as proof of a user's location; device GPS or user-confirmed location is preferred.
 The dashboard's main view contains only new incidents that need attention. Once a responder acknowledges or advances a case, it moves to the Cases archive. From an incident page, a responder can prepare a referral to a person or organisation and choose WhatsApp, Email/Gmail, or SMS/Messages. The system records the referral and provides the appropriate channel link; live provider APIs can be connected later for automated sending.
 
 # helpug
 # helpug
 # helpug
 # helpug
+# lite
